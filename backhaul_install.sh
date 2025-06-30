@@ -37,6 +37,7 @@ get_port_input() {
 }
 
 # --- Check Processor Architecture and Download Backhaul ---
+clear # Clear screen before initial messages
 echo "Detecting processor architecture and downloading Backhaul..."
 
 ARCH=$(uname -m)
@@ -73,11 +74,6 @@ if [ -n "$DOWNLOAD_URL" ]; then
             echo "Extraction complete. Cleaning up downloaded file..."
             rm "$DOWNLOAD_PATH" # Remove the downloaded tar.gz file
             
-            # Assuming the extracted executable is named 'backhaul' in the current directory
-            # You might need to adjust 'backhaul' if the extracted file has a different name
-            # For example, if it extracts to a folder, you'd need to navigate into it.
-            # The original script used BACKHAUL_EXECUTABLE, which is not defined here.
-            # For this example, we assume 'backhaul' is extracted and needs to be made executable.
             if [ -f "backhaul" ]; then
                 chmod +x "backhaul"
                 echo "Backhaul extracted and made executable successfully."
@@ -99,6 +95,7 @@ fi
 
 echo "---"
 
+clear # Clear screen before main menu
 # Main menu
 echo "Select Transport Type:"
 echo "1. TCP"
@@ -125,6 +122,7 @@ esac
 
 echo "---"
 
+clear # Clear screen before mode selection
 echo "Select Mode (Server or Client):"
 echo "1. Server"
 echo "2. Client"
@@ -142,6 +140,7 @@ echo "---"
 
 # Start creating config.toml
 if [[ "$MODE" == "server" ]]; then
+    clear # Clear screen before server configuration
     echo "[server]" >> "$CONFIG_FILE"
     BIND_ADDR=$(get_input_with_default "Bind address and port (bind_addr)" "0.0.0.0:3080")
     echo "bind_addr = \"$BIND_ADDR\"" >> "$CONFIG_FILE"
@@ -188,6 +187,7 @@ if [[ "$MODE" == "server" ]]; then
     echo "ports = $PORTS" >> "$CONFIG_FILE"
 
 elif [[ "$MODE" == "client" ]]; then
+    clear # Clear screen before client configuration
     echo "[client]" >> "$CONFIG_FILE"
     REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:3080")
     echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
@@ -228,6 +228,7 @@ elif [[ "$MODE" == "client" ]]; then
     echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
 fi
 
+clear # Clear screen before displaying the final config and running Backhaul
 echo "---"
 echo "Configuration file ($CONFIG_FILE) created successfully:"
 echo "---"
