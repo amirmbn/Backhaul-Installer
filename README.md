@@ -25,10 +25,10 @@ sudo wget https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/back
 ```
 </div>
 
+<div align="right">
 
 ## نصب از رو سرور شخصی
 
-<div align="right">
  
  - کد زیر را در سرور اوبونتو خود Past کنید
 </div>
