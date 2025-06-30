@@ -16,30 +16,14 @@ TCP Multiplexing Configuration > Enable<br>
 <div align="right">
  
  - کد زیر را در سرور اوبونتو خود Past کنید
-</div>
 
 <div align="left">
  
 ```
 sudo wget -4 https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
 ```
-</div>
-<br>
-<div align="right">
-
-## نصب از رو سرور شخصی
-
- - برای کسانی که با دانلود از گیت هاب مشکل دارن
- 
- - کد زیر را در سرور اوبونتو خود Past کنید
-</div>
-
-<div align="left">
- 
-```
-sudo wget https://amirmbn.com/backhaul/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
-```
-</div>
 
 <br><br>
 <a href="https://github.com/Musixal/Backhaul" target="_blank">Source</a>
+
+</div>
