@@ -1,21 +1,21 @@
 # Backhaul-Installer
 
 <br>
-TCP Configuration > Enabled <br>
-TCP Multiplexing Configuration > Enabled <br>
+TCP Configuration > **Enabled** <br>
+TCP Multiplexing Configuration > **Enabled** <br>
 <br>
 
 <div align="right pt-3">
- 
- - این پروژه جدید است و فعلا درحال گسترش و رفع باگ است (لطفا فعلا از این پروژه استفاده نکنید)
+ 
+ - این پروژه جدید است و فعلا درحال گسترش و رفع باگ است (لطفا فعلا از این پروژه استفاده نکنید)
 
 <div align="left">
 
 ## Automatic Installation
 
 <div align="right">
- 
- - کد زیر را در سرور اوبونتو خود Past کنید
+ 
+ - کد زیر را در سرور اوبونتو خود Past کنید
 </div>
 
 <div align="left">
