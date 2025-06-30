@@ -36,6 +36,68 @@ get_port_input() {
     fi
 }
 
+# --- Check Processor Architecture and Download Backhaul ---
+echo "Detecting processor architecture and downloading Backhaul..."
+
+ARCH=$(uname -m)
+DOWNLOAD_URL=""
+DOWNLOADED_FILENAME="" # To store the name of the downloaded .tar.gz file
+
+if [[ "$ARCH" == "x86_64" ]]; then
+    echo "Detected x86_64 architecture. Downloading from https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
+    DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
+    DOWNLOADED_FILENAME="backhaul_linux_amd64.tar.gz"
+elif [[ "$ARCH" == "aarch64" || "$ARCH" == "armv7l" || "$ARCH" == "armv8l" ]]; then
+    echo "Detected ARM architecture. Downloading from https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
+    DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
+    DOWNLOADED_FILENAME="backhaul_linux_arm64.tar.gz"
+else
+    echo "Unsupported architecture: $ARCH. Please download Backhaul manually."
+    exit 1
+fi
+
+# Define the full path for the downloaded tar.gz file
+DOWNLOAD_PATH="/tmp/$DOWNLOADED_FILENAME" # Using /tmp for temporary storage
+
+# Download, extract, and clean up
+if [ -n "$DOWNLOAD_URL" ]; then
+    echo "Downloading $DOWNLOADED_FILENAME..."
+    wget -q --show-progress -O "$DOWNLOAD_PATH" "$DOWNLOAD_URL"
+    
+    if [ $? -eq 0 ]; then
+        echo "Download complete. Extracting $DOWNLOADED_FILENAME..."
+        # Extract the contents of the tar.gz file to the current directory
+        tar -xzf "$DOWNLOAD_PATH"
+        
+        if [ $? -eq 0 ]; then
+            echo "Extraction complete. Cleaning up downloaded file..."
+            rm "$DOWNLOAD_PATH" # Remove the downloaded tar.gz file
+            
+            # Assuming the extracted executable is named 'backhaul' in the current directory
+            # You might need to adjust 'backhaul' if the extracted file has a different name
+            # For example, if it extracts to a folder, you'd need to navigate into it.
+            # The original script used BACKHAUL_EXECUTABLE, which is not defined here.
+            # For this example, we assume 'backhaul' is extracted and needs to be made executable.
+            if [ -f "backhaul" ]; then
+                chmod +x "backhaul"
+                echo "Backhaul extracted and made executable successfully."
+            else
+                echo "Warning: 'backhaul' executable not found after extraction. Please check the contents of the tar.gz file."
+            fi
+        else
+            echo "Failed to extract $DOWNLOADED_FILENAME."
+            exit 1
+        fi
+    else
+        echo "Failed to download Backhaul. Please check the URL or your network connection."
+        exit 1
+    fi
+else
+    echo "No download URL specified for this architecture. Exiting."
+    exit 1
+fi
+
+echo "---"
 
 # Main menu
 echo "Select Transport Type:"
