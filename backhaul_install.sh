@@ -189,7 +189,7 @@ if [[ "$MODE" == "server" ]]; then
 
 elif [[ "$MODE" == "client" ]]; then
     echo "[client]" >> "$CONFIG_FILE"
-    REMOTE_ADDR=$(get_input_with_default "Remote address and port (remote_addr)" "0.0.0.0:3080")
+    REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:3080")
     echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
     echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
     TOKEN=$(get_input_with_default "Token (token)" "your_token")
