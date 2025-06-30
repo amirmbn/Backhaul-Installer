@@ -29,8 +29,7 @@ sudo wget -4 https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/b
 <div align="right">
 <br>
  - سرورهای که امکان دریافت فایل از گیت هاب رو ندارن از کد زیر استفاده کنند
-<br>
-
+<br><br>
 </div>
 <div align="left">
   
