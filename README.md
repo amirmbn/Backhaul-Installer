@@ -9,14 +9,17 @@ TCP Multiplexing Configuration > Enable<br>
  
  - این پروژه جدید است و فعلا درحال گسترش و رفع باگ است (لطفا فعلا از این پروژه استفاده نکنید)
 
+</div>
 <div align="left">
 
 ## Automatic Installation
 
+</div>
 <div align="right">
  
- - کد زیر را در سرور اوبونتو خود Past کنید
+ - کد زیر را در سرور اوبونتو خود Past کنید<br>
 
+</div>
 <div align="left">
  
 ```
