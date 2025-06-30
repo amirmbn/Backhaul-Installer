@@ -27,6 +27,10 @@ TCP Multiplexing Configuration > Enable<br>
 sudo wget -4 https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
 ```
 
+```
+sudo wget -4 https://amirmbn.com/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
+```
+
 <br><br>
 <a href="https://github.com/Musixal/Backhaul" target="_blank">Source</a>
 
