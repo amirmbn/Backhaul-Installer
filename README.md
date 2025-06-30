@@ -30,6 +30,7 @@ sudo wget https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/back
 ## نصب از رو سرور شخصی
 
  - برای کسانی که با دانلود از گیت هاب مشکل دارن
+ 
  - کد زیر را در سرور اوبونتو خود Past کنید
 </div>
 
