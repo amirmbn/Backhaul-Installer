@@ -232,8 +232,7 @@ clear # Clear screen before displaying the final config and running Backhaul
 echo "---"
 echo "Configuration file ($CONFIG_FILE) created successfully:"
 echo "---"
-cat "$CONFIG_FILE"
-echo "---"
+echo ""
 
 echo "Running Backhaul with the new configuration file..."
 ./backhaul -c "$CONFIG_FILE"
