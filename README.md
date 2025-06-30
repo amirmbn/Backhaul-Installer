@@ -27,8 +27,8 @@ TCP Multiplexing Configuration > Enable<br>
 sudo wget -4 https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
 ```
 <div align="right">
-
- - سرورهای که امکان دریافت فایل از گیت هاب رو ندارن
+<br>
+ - سرورهای که امکان دریافت فایل از گیت هاب رو ندارن از کد زیر استفاده کنند
 <br>
 
 </div>
