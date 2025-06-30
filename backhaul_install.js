@@ -85,11 +85,11 @@ async function main() {
 
     let downloadUrl = '';
     if (arch === 'x86_64') {
-        console.log("Detected x86_64 architecture. Downloading from https://amirmbn.com/amd");
-        downloadUrl = "https://amirmbn.com/amd";
+        console.log("Detected x86_64 architecture. Downloading from https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz");
+        downloadUrl = "https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz";
     } else if (arch === 'aarch64' || arch === 'armv7l' || arch === 'armv8l') {
-        console.log("Detected ARM architecture. Downloading from https://amirmbn.com/arm");
-        downloadUrl = "https://amirmbn.com/arm";
+        console.log("Detected ARM architecture. Downloading from https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz");
+        downloadUrl = "https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz";
     } else {
         console.log(`Unsupported architecture: ${arch}. Please download Backhaul manually.`);
         rl.close();
