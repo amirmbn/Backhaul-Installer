@@ -1,7 +1,7 @@
 # Backhaul-Installer
 
 <br>
-TCP Configuration > **Enabled** <br>
+TCP Configuration > <span style="font-weght: bold; font-color: #00ff00;">Enable</span><br>
 TCP Multiplexing Configuration > **Enabled** <br>
 <br>
 
