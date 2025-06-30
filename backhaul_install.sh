@@ -1,7 +1,6 @@
 #!/bin/bash
 
 CONFIG_FILE="config.toml"
-BACKHAUL_EXECUTABLE="./backhaul" # Path to the backhaul executable
 
 # Function to get user input with a default value
 get_input_with_default() {
@@ -37,39 +36,6 @@ get_port_input() {
     fi
 }
 
-# --- Check Processor Architecture and Download Backhaul ---
-echo "Detecting processor architecture and downloading Backhaul..."
-
-ARCH=$(uname -m)
-DOWNLOAD_URL=""
-
-if [[ "$ARCH" == "x86_64" ]]; then
-    echo "Detected x86_64 architecture. Downloading from https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
-    DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
-elif [[ "$ARCH" == "aarch64" || "$ARCH" == "armv7l" || "$ARCH" == "armv8l" ]]; then
-    echo "Detected ARM architecture. Downloading from https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
-    DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
-else
-    echo "Unsupported architecture: $ARCH. Please download Backhaul manually."
-    exit 1
-fi
-
-# Download and make executable
-if [ -n "$DOWNLOAD_URL" ]; then
-    wget -q --show-progress -O "$BACKHAUL_EXECUTABLE" "$DOWNLOAD_URL"
-    if [ $? -eq 0 ]; then
-        chmod +x "$BACKHAUL_EXECUTABLE"
-        echo "Backhaul downloaded and made executable successfully."
-    else
-        echo "Failed to download Backhaul. Please check the URL or your network connection."
-        exit 1
-    fi
-else
-    echo "No download URL specified for this architecture. Exiting."
-    exit 1
-fi
-
-echo "---"
 
 # Main menu
 echo "Select Transport Type:"
@@ -210,10 +176,4 @@ cat "$CONFIG_FILE"
 echo "---"
 
 echo "Running Backhaul with the new configuration file..."
-# Ensure the backhaul executable exists before trying to run it
-if [ -f "$BACKHAUL_EXECUTABLE" ]; then
-    "$BACKHAUL_EXECUTABLE" -c "$CONFIG_FILE"
-else
-    echo "Error: Backhaul executable not found at $BACKHAUL_EXECUTABLE. Please check the download or path."
-    exit 1
-fi
+./backhaul -c "$CONFIG_FILE"
