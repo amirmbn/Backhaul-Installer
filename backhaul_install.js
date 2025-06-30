@@ -87,12 +87,12 @@ async function main() {
     let downloadedFilename = "";
 
     if (arch === 'x64') {
-        console.log("Detected x86_64 architecture. Downloading from https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz");
-        downloadUrl = "https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz";
+        console.log("Detected x86_64 architecture. Downloading from https://github.com/amirmbn/Backhaul-Installer/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz");
+        downloadUrl = "https://github.com/amirmbn/Backhaul-Installer/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz";
         downloadedFilename = "backhaul_linux_amd64.tar.gz";
     } else if (arch === 'arm64' || arch === 'arm') { // 'arm' might catch armv7l/armv8l depending on Node.js build
-        console.log("Detected ARM architecture. Downloading from https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz");
-        downloadUrl = "https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz";
+        console.log("Detected ARM architecture. Downloading from https://github.com/amirmbn/Backhaul-Installer/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz");
+        downloadUrl = "https://github.com/amirmbn/Backhaul-Installer/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz";
         downloadedFilename = "backhaul_linux_arm64.tar.gz";
     } else {
         console.error(`Unsupported architecture: ${arch}. Please download Backhaul manually.`);
