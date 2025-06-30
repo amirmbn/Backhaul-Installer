@@ -16,7 +16,7 @@
 <div align="left">
  
 ```
-sudo wget https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/backhaul_install.js && sudo chmod +x backhaul_install.js && sudo ./backhaul_install.js
+sudo wget https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
 ```
 </div>
 <div align="right">
