@@ -236,3 +236,28 @@ echo ""
 
 echo "Running Backhaul with the new configuration file..."
 ./backhaul -c "$CONFIG_FILE"
+
+# Create the systemd service file
+SERVICE_FILE="/etc/systemd/system/backhaul.service"
+echo "[Unit]
+Description=Backhaul Reverse Tunnel Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/root/backhaul -c /root/config.toml
+Restart=always
+RestartSec=3
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target" | sudo tee "$SERVICE_FILE" > /dev/null
+
+echo "Systemd service file created at $SERVICE_FILE"
+
+# Reload systemd, enable, and start the service
+sudo systemctl daemon-reload
+sudo systemctl enable backhaul.service
+sudo systemctl start backhaul.service
+
+echo "Backhaul service enabled and started."
