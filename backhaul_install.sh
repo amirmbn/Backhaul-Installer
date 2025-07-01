@@ -234,9 +234,6 @@ echo "Configuration file ($CONFIG_FILE) created successfully:"
 echo "---"
 echo ""
 
-echo "Running Backhaul with the new configuration file..."
-./backhaul -c "$CONFIG_FILE"
-
 # Create the systemd service file
 SERVICE_FILE="/etc/systemd/system/backhaul.service"
 echo "[Unit]
