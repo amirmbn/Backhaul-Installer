@@ -26,7 +26,7 @@ get_boolean_input() {
     done
 }
 
-# Function to get port input (array of strings)
+# Function to get port input
 get_port_input() {
     local prompt="$1"
     local default_value="$2"
@@ -36,50 +36,17 @@ get_port_input() {
         if [[ -z "$port" ]]; then
             break # Exit loop if input is empty
         elif [[ "$port" =~ ^[0-9]+$ ]] && (( port >= 1 && port <= 65535 )); then
-            ports_array+=("\"$port\"") # Add with quotes for TOML array of strings
-            # Loop continues until empty input
+            ports_array+=("\"$port\"")
+            # No "add another port" prompt, loop continues until empty input
         else
             echo "Invalid input. Please enter a valid port number (1-65535) or leave empty to finish."
         fi
     done
     if [[ ${#ports_array[@]} -gt 0 ]]; then
-        echo "[$(IFS=,; echo "${ports_array[*]}") ]" # Format as TOML array
+        echo "[$(IFS=,; echo "${ports_array[*]}") ]"
     else
         echo "[]"
     fi
-}
-
-# Function to write a config entry based on type
-# Parameters: param_name, prompt_text, default_value, input_type
-write_config_entry() {
-    local param_name="$1"
-    local prompt_text="$2"
-    local default_value="$3"
-    local input_type="$4"
-    local value
-
-    case "$input_type" in
-        "string")
-            value=$(get_input_with_default "$prompt_text" "$default_value")
-            echo "$param_name = \"$value\"" >> "$CONFIG_FILE"
-            ;;
-        "integer")
-            value=$(get_input_with_default "$prompt_text" "$default_value")
-            echo "$param_name = $value" >> "$CONFIG_FILE"
-            ;;
-        "boolean")
-            value=$(get_boolean_input "$prompt_text" "$default_value")
-            echo "$param_name = $value" >> "$CONFIG_FILE"
-            ;;
-        "port_array")
-            value=$(get_port_input "$prompt_text" "$default_value")
-            echo "$param_name = $value" >> "$CONFIG_FILE"
-            ;;
-        *)
-            echo "Error: Unknown input type '$input_type' for parameter '$param_name'."
-            exit 1
-            ;;
-    esac
 }
 
 # --- Check Processor Architecture and Download Backhaul ---
@@ -110,16 +77,16 @@ DOWNLOAD_PATH="/tmp/$DOWNLOADED_FILENAME" # Using /tmp for temporary storage
 if [ -n "$DOWNLOAD_URL" ]; then
     echo "Downloading $DOWNLOADED_FILENAME..."
     wget -q --show-progress -O "$DOWNLOAD_PATH" "$DOWNLOAD_URL"
-
+    
     if [ $? -eq 0 ]; then
-        echo "Download complete. Extracting $DOWNLOADED_FILENAME..."
+        echo "Download complete. Extracting $DOWNLOAD_FILENAME..."
         # Extract the contents of the tar.gz file to the current directory
         tar -xzf "$DOWNLOAD_PATH"
-
+        
         if [ $? -eq 0 ]; then
             echo "Extraction complete. Cleaning up downloaded file..."
             rm "$DOWNLOAD_PATH" # Remove the downloaded tar.gz file
-
+            
             if [ -f "backhaul" ]; then
                 chmod +x "backhaul"
                 echo "Backhaul extracted and made executable successfully."
@@ -127,7 +94,7 @@ if [ -n "$DOWNLOAD_URL" ]; then
                 echo "Warning: 'backhaul' executable not found after extraction. Please check the contents of the tar.gz file."
             fi
         else
-            echo "Failed to extract $DOWNLOADED_FILENAME."
+            echo "Failed to extract $DOWNLOAD_FILENAME."
             exit 1
         fi
     else
@@ -184,128 +151,444 @@ esac
 
 echo "---"
 
-# Remove existing config file if it exists
-[ -f "$CONFIG_FILE" ] && rm "$CONFIG_FILE"
-
-# Declare associative arrays for configuration parameters
-declare -A SERVER_DEFAULTS
-declare -A CLIENT_DEFAULTS
-
-# Common server defaults (param_name:default_value:input_type)
-SERVER_DEFAULTS=(
-    ["token"]="your_token:string"
-    ["channel_size"]="2048:integer"
-    ["sniffer"]="false:boolean"
-    ["web_port"]="2060:integer"
-    ["sniffer_log"]="/root/backhaul.json:string"
-    ["log_level"]="info:string"
-    ["ports"]=":port_array" # Default empty for port array
-)
-
-# Common client defaults (param_name:default_value:input_type)
-CLIENT_DEFAULTS=(
-    ["token"]="your_token:string"
-    ["connection_pool"]="8:integer"
-    ["aggressive_pool"]="false:boolean"
-    ["retry_interval"]="3:integer"
-    ["sniffer"]="false:boolean"
-    ["web_port"]="2060:integer"
-    ["sniffer_log"]="/root/backhaul.json:string"
-    ["log_level"]="info:string"
-)
-
-# Transport-specific overrides and additions for server
-# Format: "param_name:default_value:input_type;param_name:default_value:input_type"
-declare -A SERVER_TRANSPORT_CONFIG
-SERVER_TRANSPORT_CONFIG=(
-    ["tcp"]="bind_addr:0.0.0.0:3080:string;accept_udp:false:boolean;keepalive_period:75:integer;nodelay:true:boolean;heartbeat:40:integer"
-    ["tcpmux"]="bind_addr:0.0.0.0:3080:string;keepalive_period:75:integer;nodelay:true:boolean;heartbeat:40:integer;mux_con:8:integer;mux_version:1:integer;mux_framesize:32768:integer;mux_recievebuffer:4194304:integer;mux_streambuffer:65536:integer"
-    ["udp"]="bind_addr:0.0.0.0:3080:string;heartbeat:20:integer"
-    ["ws"]="bind_addr:0.0.0.0:8080:string;keepalive_period:75:integer;heartbeat:40:integer;nodelay:true:boolean"
-    ["wss"]="bind_addr:0.0.0.0:8443:string;keepalive_period:75:integer;heartbeat:40:integer;nodelay:true:boolean;tls_cert:/root/server.crt:string;tls_key:/root/server.key:string"
-    ["wsmux"]="bind_addr:0.0.0.0:3080:string;keepalive_period:75:integer;nodelay:true:boolean;heartbeat:40:integer;mux_con:8:integer;mux_version:1:integer;mux_framesize:32768:integer;mux_recievebuffer:4194304:integer;mux_streambuffer:65536:integer"
-    ["wssmux"]="bind_addr:0.0.0.0:443:string;keepalive_period:75:integer;nodelay:true:boolean;heartbeat:40:integer;mux_con:8:integer;mux_version:1:integer;mux_framesize:32768:integer;mux_recievebuffer:4194304:integer;mux_streambuffer:65536:integer;tls_cert:/root/server.crt:string;tls_key:/root/server.key:string"
-)
-
-# Transport-specific overrides and additions for client
-# Format: "param_name:default_value:input_type;param_name:default_value:input_type"
-declare -A CLIENT_TRANSPORT_CONFIG
-CLIENT_TRANSPORT_CONFIG=(
-    ["tcp"]="remote_addr:0.0.0.0:3080:string;keepalive_period:75:integer;dial_timeout:10:integer;nodelay:true:boolean"
-    ["tcpmux"]="remote_addr:0.0.0.0:3080:string;keepalive_period:75:integer;dial_timeout:10:integer;nodelay:true:boolean;mux_version:1:integer;mux_framesize:32768:integer;mux_recievebuffer:4194304:integer;mux_streambuffer:65536:integer"
-    ["udp"]="remote_addr:0.0.0.0:3080:string" # UDP client has fewer unique parameters
-    ["ws"]="remote_addr:0.0.0.0:8080:string;edge_ip::string;keepalive_period:75:integer;dial_timeout:10:integer;nodelay:true:boolean"
-    ["wss"]="remote_addr:0.0.0.0:8443:string;edge_ip::string;keepalive_period:75:integer;dial_timeout:10:integer;nodelay:true:boolean" # Heartbeat is not explicitly in original client WSS
-    ["wsmux"]="remote_addr:0.0.0.0:3080:string;edge_ip::string;keepalive_period:75:integer;dial_timeout:10:integer;nodelay:true:boolean;mux_version:1:integer;mux_framesize:32768:integer;mux_recievebuffer:4194304:integer;mux_streambuffer:65536:integer"
-    ["wssmux"]="remote_addr:0.0.0.0:443:string;edge_ip::string;keepalive_period:75:integer;dial_timeout:10:integer;nodelay:true:boolean;mux_version:1:integer;mux_framesize:32768:integer;mux_recievebuffer:4194304:integer;mux_streambuffer:65536:integer"
-)
-
 # Start creating config.toml
 if [[ "$MODE" == "server" ]]; then
     clear # Clear screen before server configuration
     echo "[server]" >> "$CONFIG_FILE"
-    echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE" # Transport is always written first
 
-    # Collect all parameters for server
-    declare -A current_config
-    for entry in "${!SERVER_DEFAULTS[@]}"; do
-        IFS=':' read -r param_name default_value input_type <<< "${SERVER_DEFAULTS[$entry]}"
-        current_config["$param_name"]="$default_value:$input_type"
-    done
-
-    # Add transport-specific parameters, overriding defaults if necessary
-    IFS=';' read -ra ADDR <<< "${SERVER_TRANSPORT_CONFIG[$TRANSPORT]}"
-    for i in "${ADDR[@]}"; do
-        IFS=':' read -r param_name default_value input_type <<< "$i"
-        current_config["$param_name"]="$default_value:$input_type"
-    done
-
-    # Prompt and write to config file
-    for param_name in "${!current_config[@]}"; do
-        IFS=':' read -r default_value input_type <<< "${current_config[$param_name]}"
-        # Special handling for 'ports' prompt to be more specific
-        if [[ "$param_name" == "ports" ]]; then
-            write_config_entry "$param_name" "Ports to monitor (e.g., 80,443). Leave empty to finish." "$default_value" "$input_type"
-        else
-            # Generate a user-friendly prompt from the parameter name
-            prompt_text="$(tr '_' ' ' <<< "$param_name" | sed -e "s/\b\(.\)/\u\1/g") ($param_name)"
-            write_config_entry "$param_name" "$prompt_text" "$default_value" "$input_type"
-        fi
-    done
+    case "$TRANSPORT" in
+        "tcp")
+            BIND_ADDR=$(get_input_with_default "Bind address and port (bind_addr)" "0.0.0.0:3080")
+            echo "bind_addr = \"$BIND_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            ACCEPT_UDP=$(get_boolean_input "Accept UDP? (true/false)" "false")
+            echo "accept_udp = $ACCEPT_UDP" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            HEARTBEAT=$(get_input_with_default "Heartbeat (seconds) (heartbeat)" "40")
+            echo "heartbeat = $HEARTBEAT" >> "$CONFIG_FILE"
+            CHANNEL_SIZE=$(get_input_with_default "Channel Size (channel_size)" "2048")
+            echo "channel_size = $CHANNEL_SIZE" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            PORTS=$(get_port_input "Ports to monitor (e.g., 80,443). Leave empty to finish." "")
+            echo "ports = $PORTS" >> "$CONFIG_FILE"
+            ;;
+        "tcpmux")
+            BIND_ADDR=$(get_input_with_default "Bind address and port (bind_addr)" "0.0.0.0:3080")
+            echo "bind_addr = \"$BIND_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            HEARTBEAT=$(get_input_with_default "Heartbeat (seconds) (heartbeat)" "40")
+            echo "heartbeat = $HEARTBEAT" >> "$CONFIG_FILE"
+            CHANNEL_SIZE=$(get_input_with_default "Channel Size (channel_size)" "2048")
+            echo "channel_size = $CHANNEL_SIZE" >> "$CONFIG_FILE"
+            MUX_CON=$(get_input_with_default "Max multiplexed connections (mux_con)" "8")
+            echo "mux_con = $MUX_CON" >> "$CONFIG_FILE"
+            MUX_VERSION=$(get_input_with_default "Multiplexing version (mux_version)" "1")
+            echo "mux_version = $MUX_VERSION" >> "$CONFIG_FILE"
+            MUX_FRAMESIZE=$(get_input_with_default "Multiplexing frame size (mux_framesize)" "32768")
+            echo "mux_framesize = $MUX_FRAMESIZE" >> "$CONFIG_FILE"
+            MUX_RECEIVEBUFFER=$(get_input_with_default "Multiplexing receive buffer size (mux_recievebuffer)" "4194304")
+            echo "mux_recievebuffer = $MUX_RECEIVEBUFFER" >> "$CONFIG_FILE"
+            MUX_STREAMBUFFER=$(get_input_with_default "Multiplexing stream buffer size (mux_streambuffer)" "65536")
+            echo "mux_streambuffer = $MUX_STREAMBUFFER" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            PORTS=$(get_port_input "Ports to monitor (e.g., 80,443). Leave empty to finish." "")
+            echo "ports = $PORTS" >> "$CONFIG_FILE"
+            ;;
+        "udp")
+            BIND_ADDR=$(get_input_with_default "Bind address and port (bind_addr)" "0.0.0.0:3080")
+            echo "bind_addr = \"$BIND_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            HEARTBEAT=$(get_input_with_default "Heartbeat (seconds) (heartbeat)" "20")
+            echo "heartbeat = $HEARTBEAT" >> "$CONFIG_FILE"
+            CHANNEL_SIZE=$(get_input_with_default "Channel Size (channel_size)" "2048")
+            echo "channel_size = $CHANNEL_SIZE" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            PORTS=$(get_port_input "Ports to monitor (e.g., 80,443). Leave empty to finish." "")
+            echo "ports = $PORTS" >> "$CONFIG_FILE"
+            ;;
+        "ws")
+            BIND_ADDR=$(get_input_with_default "Bind address and port (bind_addr)" "0.0.0.0:8080")
+            echo "bind_addr = \"$BIND_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            CHANNEL_SIZE=$(get_input_with_default "Channel Size (channel_size)" "2048")
+            echo "channel_size = $CHANNEL_SIZE" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            HEARTBEAT=$(get_input_with_default "Heartbeat (seconds) (heartbeat)" "40")
+            echo "heartbeat = $HEARTBEAT" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            PORTS=$(get_port_input "Ports to monitor (e.g., 80,443). Leave empty to finish." "")
+            echo "ports = $PORTS" >> "$CONFIG_FILE"
+            ;;
+        "wss")
+            BIND_ADDR=$(get_input_with_default "Bind address and port (bind_addr)" "0.0.0.0:8443")
+            echo "bind_addr = \"$BIND_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            CHANNEL_SIZE=$(get_input_with_default "Channel Size (channel_size)" "2048")
+            echo "channel_size = $CHANNEL_SIZE" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            TLS_CERT=$(get_input_with_default "TLS Certificate Path (tls_cert)" "/root/server.crt")
+            echo "tls_cert = \"$TLS_CERT\"" >> "$CONFIG_FILE"
+            TLS_KEY=$(get_input_with_default "TLS Key Path (tls_key)" "/root/server.key")
+            echo "tls_key = \"$TLS_KEY\"" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            PORTS=$(get_port_input "Ports to monitor (e.g., 80,443). Leave empty to finish." "")
+            echo "ports = $PORTS" >> "$CONFIG_FILE"
+            ;;
+        "wsmux")
+            BIND_ADDR=$(get_input_with_default "Bind address and port (bind_addr)" "0.0.0.0:3080")
+            echo "bind_addr = \"$BIND_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            HEARTBEAT=$(get_input_with_default "Heartbeat (seconds) (heartbeat)" "40")
+            echo "heartbeat = $HEARTBEAT" >> "$CONFIG_FILE"
+            CHANNEL_SIZE=$(get_input_with_default "Channel Size (channel_size)" "2048")
+            echo "channel_size = $CHANNEL_SIZE" >> "$CONFIG_FILE"
+            MUX_CON=$(get_input_with_default "Max multiplexed connections (mux_con)" "8")
+            echo "mux_con = $MUX_CON" >> "$CONFIG_FILE"
+            MUX_VERSION=$(get_input_with_default "Multiplexing version (mux_version)" "1")
+            echo "mux_version = $MUX_VERSION" >> "$CONFIG_FILE"
+            MUX_FRAMESIZE=$(get_input_with_default "Multiplexing frame size (mux_framesize)" "32768")
+            echo "mux_framesize = $MUX_FRAMESIZE" >> "$CONFIG_FILE"
+            MUX_RECEIVEBUFFER=$(get_input_with_default "Multiplexing receive buffer size (mux_recievebuffer)" "4194304")
+            echo "mux_recievebuffer = $MUX_RECEIVEBUFFER" >> "$CONFIG_FILE"
+            MUX_STREAMBUFFER=$(get_input_with_default "Multiplexing stream buffer size (mux_streambuffer)" "65536")
+            echo "mux_streambuffer = $MUX_STREAMBUFFER" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            PORTS=$(get_port_input "Ports to monitor (e.g., 80,443). Leave empty to finish." "")
+            echo "ports = $PORTS" >> "$CONFIG_FILE"
+            ;;
+        "wssmux")
+            BIND_ADDR=$(get_input_with_default "Bind address and port (bind_addr)" "0.0.0.0:443")
+            echo "bind_addr = \"$BIND_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            HEARTBEAT=$(get_input_with_default "Heartbeat (seconds) (heartbeat)" "40")
+            echo "heartbeat = $HEARTBEAT" >> "$CONFIG_FILE"
+            CHANNEL_SIZE=$(get_input_with_default "Channel Size (channel_size)" "2048")
+            echo "channel_size = $CHANNEL_SIZE" >> "$CONFIG_FILE"
+            MUX_CON=$(get_input_with_default "Max multiplexed connections (mux_con)" "8")
+            echo "mux_con = $MUX_CON" >> "$CONFIG_FILE"
+            MUX_VERSION=$(get_input_with_default "Multiplexing version (mux_version)" "1")
+            echo "mux_version = $MUX_VERSION" >> "$CONFIG_FILE"
+            MUX_FRAMESIZE=$(get_input_with_default "Multiplexing frame size (mux_framesize)" "32768")
+            echo "mux_framesize = $MUX_FRAMESIZE" >> "$CONFIG_FILE"
+            MUX_RECEIVEBUFFER=$(get_input_with_default "Multiplexing receive buffer size (mux_recievebuffer)" "4194304")
+            echo "mux_recievebuffer = $MUX_RECEIVEBUFFER" >> "$CONFIG_FILE"
+            MUX_STREAMBUFFER=$(get_input_with_default "Multiplexing stream buffer size (mux_streambuffer)" "65536")
+            echo "mux_streambuffer = $MUX_STREAMBUFFER" >> "$CONFIG_FILE"
+            TLS_CERT=$(get_input_with_default "TLS Certificate Path (tls_cert)" "/root/server.crt")
+            echo "tls_cert = \"$TLS_CERT\"" >> "$CONFIG_FILE"
+            TLS_KEY=$(get_input_with_default "TLS Key Path (tls_key)" "/root/server.key")
+            echo "tls_key = \"$TLS_KEY\"" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            PORTS=$(get_port_input "Ports to monitor (e.g., 80,443). Leave empty to finish." "")
+            echo "ports = $PORTS" >> "$CONFIG_FILE"
+            ;;
+    esac
 
 elif [[ "$MODE" == "client" ]]; then
     clear # Clear screen before client configuration
     echo "[client]" >> "$CONFIG_FILE"
-    echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE" # Transport is always written first
 
-    # Collect all parameters for client
-    declare -A current_config
-    for entry in "${!CLIENT_DEFAULTS[@]}"; do
-        IFS=':' read -r param_name default_value input_type <<< "${CLIENT_DEFAULTS[$entry]}"
-        current_config["$param_name"]="$default_value:$input_type"
-    done
-
-    # Add transport-specific parameters, overriding defaults if necessary
-    IFS=';' read -ra ADDR <<< "${CLIENT_TRANSPORT_CONFIG[$TRANSPORT]}"
-    for i in "${ADDR[@]}"; do
-        IFS=':' read -r param_name default_value input_type <<< "$i"
-        current_config["$param_name"]="$default_value:$input_type"
-    done
-
-    # Prompt and write to config file
-    for param_name in "${!current_config[@]}"; do
-        IFS=':' read -r default_value input_type <<< "${current_config[$param_name]}"
-        # Special handling for 'remote_addr' and 'edge_ip' prompts
-        if [[ "$param_name" == "remote_addr" ]]; then
-            write_config_entry "$param_name" "Enter IR VPS IP address and port ($param_name)" "$default_value" "$input_type"
-        elif [[ "$param_name" == "edge_ip" ]]; then
-            write_config_entry "$param_name" "Edge IP ($param_name)" "$default_value" "$input_type"
-        else
-            # Generate a user-friendly prompt from the parameter name
-            prompt_text="$(tr '_' ' ' <<< "$param_name" | sed -e "s/\b\(.\)/\u\1/g") ($param_name)"
-            write_config_entry "$param_name" "$prompt_text" "$default_value" "$input_type"
-        fi
-    done
+    case "$TRANSPORT" in
+        "tcp")
+            REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:3080")
+            echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            CONNECTION_POOL=$(get_input_with_default "Connection Pool Size (connection_pool)" "8")
+            echo "connection_pool = $CONNECTION_POOL" >> "$CONFIG_FILE"
+            AGGRESSIVE_POOL=$(get_boolean_input "Enable Aggressive Pool? (true/false)" "false")
+            echo "aggressive_pool = $AGGRESSIVE_POOL" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            DIAL_TIMEOUT=$(get_input_with_default "Dial Timeout (seconds) (dial_timeout)" "10")
+            echo "dial_timeout = $DIAL_TIMEOUT" >> "$CONFIG_FILE"
+            RETRY_INTERVAL=$(get_input_with_default "Retry Interval (seconds) (retry_interval)" "3")
+            echo "retry_interval = $RETRY_INTERVAL" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            ;;
+        "tcpmux")
+            REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:3080")
+            echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            CONNECTION_POOL=$(get_input_with_default "Connection Pool Size (connection_pool)" "8")
+            echo "connection_pool = $CONNECTION_POOL" >> "$CONFIG_FILE"
+            AGGRESSIVE_POOL=$(get_boolean_input "Enable Aggressive Pool? (true/false)" "false")
+            echo "aggressive_pool = $AGGRESSIVE_POOL" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            DIAL_TIMEOUT=$(get_input_with_default "Dial Timeout (seconds) (dial_timeout)" "10")
+            echo "dial_timeout = $DIAL_TIMEOUT" >> "$CONFIG_FILE"
+            RETRY_INTERVAL=$(get_input_with_default "Retry Interval (seconds) (retry_interval)" "3")
+            echo "retry_interval = $RETRY_INTERVAL" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            MUX_VERSION=$(get_input_with_default "Multiplexing version (mux_version)" "1")
+            echo "mux_version = $MUX_VERSION" >> "$CONFIG_FILE"
+            MUX_FRAMESIZE=$(get_input_with_default "Multiplexing frame size (mux_framesize)" "32768")
+            echo "mux_framesize = $MUX_FRAMESIZE" >> "$CONFIG_FILE"
+            MUX_RECEIVEBUFFER=$(get_input_with_default "Multiplexing receive buffer size (mux_recievebuffer)" "4194304")
+            echo "mux_recievebuffer = $MUX_RECEIVEBUFFER" >> "$CONFIG_FILE"
+            MUX_STREAMBUFFER=$(get_input_with_default "Multiplexing stream buffer size (mux_streambuffer)" "65536")
+            echo "mux_streambuffer = $MUX_STREAMBUFFER" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            ;;
+        "udp")
+            REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:3080")
+            echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            CONNECTION_POOL=$(get_input_with_default "Connection Pool Size (connection_pool)" "8")
+            echo "connection_pool = $CONNECTION_POOL" >> "$CONFIG_FILE"
+            AGGRESSIVE_POOL=$(get_boolean_input "Enable Aggressive Pool? (true/false)" "false")
+            echo "aggressive_pool = $AGGRESSIVE_POOL" >> "$CONFIG_FILE"
+            RETRY_INTERVAL=$(get_input_with_default "Retry Interval (seconds) (retry_interval)" "3")
+            echo "retry_interval = $RETRY_INTERVAL" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            ;;
+        "ws")
+            REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:8080")
+            echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
+            EDGE_IP=$(get_input_with_default "Edge IP (edge_ip)" "")
+            echo "edge_ip = \"$EDGE_IP\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            CONNECTION_POOL=$(get_input_with_default "Connection Pool Size (connection_pool)" "8")
+            echo "connection_pool = $CONNECTION_POOL" >> "$CONFIG_FILE"
+            AGGRESSIVE_POOL=$(get_boolean_input "Enable Aggressive Pool? (true/false)" "false")
+            echo "aggressive_pool = $AGGRESSIVE_POOL" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            DIAL_TIMEOUT=$(get_input_with_default "Dial Timeout (seconds) (dial_timeout)" "10")
+            echo "dial_timeout = $DIAL_TIMEOUT" >> "$CONFIG_FILE"
+            RETRY_INTERVAL=$(get_input_with_default "Retry Interval (seconds) (retry_interval)" "3")
+            echo "retry_interval = $RETRY_INTERVAL" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            ;;
+        "wss")
+            REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:8443")
+            echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
+            EDGE_IP=$(get_input_with_default "Edge IP (edge_ip)" "")
+            echo "edge_ip = \"$EDGE_IP\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            CONNECTION_POOL=$(get_input_with_default "Connection Pool Size (connection_pool)" "8")
+            echo "connection_pool = $CONNECTION_POOL" >> "$CONFIG_FILE"
+            AGGRESSIVE_POOL=$(get_boolean_input "Enable Aggressive Pool? (true/false)" "false")
+            echo "aggressive_pool = $AGGRESSIVE_POOL" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            DIAL_TIMEOUT=$(get_input_with_default "Dial Timeout (seconds) (dial_timeout)" "10")
+            echo "dial_timeout = $DIAL_TIMEOUT" >> "$CONFIG_FILE"
+            RETRY_INTERVAL=$(get_input_with_default "Retry Interval (seconds) (retry_interval)" "3")
+            echo "retry_interval = $RETRY_INTERVAL" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            ;;
+        "wsmux")
+            REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:3080")
+            echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
+            EDGE_IP=$(get_input_with_default "Edge IP (edge_ip)" "")
+            echo "edge_ip = \"$EDGE_IP\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            CONNECTION_POOL=$(get_input_with_default "Connection Pool Size (connection_pool)" "8")
+            echo "connection_pool = $CONNECTION_POOL" >> "$CONFIG_FILE"
+            AGGRESSIVE_POOL=$(get_boolean_input "Enable Aggressive Pool? (true/false)" "false")
+            echo "aggressive_pool = $AGGRESSIVE_POOL" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            DIAL_TIMEOUT=$(get_input_with_default "Dial Timeout (seconds) (dial_timeout)" "10")
+            echo "dial_timeout = $DIAL_TIMEOUT" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            RETRY_INTERVAL=$(get_input_with_default "Retry Interval (seconds) (retry_interval)" "3")
+            echo "retry_interval = $RETRY_INTERVAL" >> "$CONFIG_FILE"
+            MUX_VERSION=$(get_input_with_default "Multiplexing version (mux_version)" "1")
+            echo "mux_version = $MUX_VERSION" >> "$CONFIG_FILE"
+            MUX_FRAMESIZE=$(get_input_with_default "Multiplexing frame size (mux_framesize)" "32768")
+            echo "mux_framesize = $MUX_FRAMESIZE" >> "$CONFIG_FILE"
+            MUX_RECEIVEBUFFER=$(get_input_with_default "Multiplexing receive buffer size (mux_recievebuffer)" "4194304")
+            echo "mux_recievebuffer = $MUX_RECEIVEBUFFER" >> "$CONFIG_FILE"
+            MUX_STREAMBUFFER=$(get_input_with_default "Multiplexing stream buffer size (mux_streambuffer)" "65536")
+            echo "mux_streambuffer = $MUX_STREAMBUFFER" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            ;;
+        "wssmux")
+            REMOTE_ADDR=$(get_input_with_default "Enter IR VPS IP address and port (remote_addr)" "0.0.0.0:443")
+            echo "remote_addr = \"$REMOTE_ADDR\"" >> "$CONFIG_FILE"
+            EDGE_IP=$(get_input_with_default "Edge IP (edge_ip)" "")
+            echo "edge_ip = \"$EDGE_IP\"" >> "$CONFIG_FILE"
+            echo "transport = \"$TRANSPORT\"" >> "$CONFIG_FILE"
+            TOKEN=$(get_input_with_default "Token (token)" "your_token")
+            echo "token = \"$TOKEN\"" >> "$CONFIG_FILE"
+            KEEPALIVE_PERIOD=$(get_input_with_default "Keepalive Period (seconds) (keepalive_period)" "75")
+            echo "keepalive_period = $KEEPALIVE_PERIOD" >> "$CONFIG_FILE"
+            DIAL_TIMEOUT=$(get_input_with_default "Dial Timeout (seconds) (dial_timeout)" "10")
+            echo "dial_timeout = $DIAL_TIMEOUT" >> "$CONFIG_FILE"
+            NODELAY=$(get_boolean_input "Enable Nodelay? (true/false)" "true")
+            echo "nodelay = $NODELAY" >> "$CONFIG_FILE"
+            RETRY_INTERVAL=$(get_input_with_default "Retry Interval (seconds) (retry_interval)" "3")
+            echo "retry_interval = $RETRY_INTERVAL" >> "$CONFIG_FILE"
+            CONNECTION_POOL=$(get_input_with_default "Connection Pool Size (connection_pool)" "8")
+            echo "connection_pool = $CONNECTION_POOL" >> "$CONFIG_FILE"
+            AGGRESSIVE_POOL=$(get_boolean_input "Enable Aggressive Pool? (true/false)" "false")
+            echo "aggressive_pool = $AGGRESSIVE_POOL" >> "$CONFIG_FILE"
+            MUX_VERSION=$(get_input_with_default "Multiplexing version (mux_version)" "1")
+            echo "mux_version = $MUX_VERSION" >> "$CONFIG_FILE"
+            MUX_FRAMESIZE=$(get_input_with_default "Multiplexing frame size (mux_framesize)" "32768")
+            echo "mux_framesize = $MUX_FRAMESIZE" >> "$CONFIG_FILE"
+            MUX_RECEIVEBUFFER=$(get_input_with_default "Multiplexing receive buffer size (mux_recievebuffer)" "4194304")
+            echo "mux_recievebuffer = $MUX_RECEIVEBUFFER" >> "$CONFIG_FILE"
+            MUX_STREAMBUFFER=$(get_input_with_default "Multiplexing stream buffer size (mux_streambuffer)" "65536")
+            echo "mux_streambuffer = $MUX_STREAMBUFFER" >> "$CONFIG_FILE"
+            SNIFFER=$(get_boolean_input "Enable Sniffer? (true/false)" "false")
+            echo "sniffer = $SNIFFER" >> "$CONFIG_FILE"
+            WEB_PORT=$(get_input_with_default "Web Port (web_port)" "2060")
+            echo "web_port = $WEB_PORT" >> "$CONFIG_FILE"
+            SNIFFER_LOG=$(get_input_with_default "Sniffer Log File Path (sniffer_log)" "/root/backhaul.json")
+            echo "sniffer_log = \"$SNIFFER_LOG\"" >> "$CONFIG_FILE"
+            LOG_LEVEL=$(get_input_with_default "Log Level (log_level) (debug, info, warn, error)" "info")
+            echo "log_level = \"$LOG_LEVEL\"" >> "$CONFIG_FILE"
+            ;;
+    esac
 fi
 
 clear # Clear screen before displaying the final config and running Backhaul
