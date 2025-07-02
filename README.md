@@ -5,8 +5,8 @@ TCP Configuration > Enable<br>
 TCP Multiplexing Configuration > Enable<br>
 <br>
 
-<div align="right pt-3">
-
+<div align="right">
+<br>
  - این پروژه جدید است و فعلا درحال گسترش و رفع باگ است (لطفا فعلا از این پروژه استفاده نکنید)
 
 </div>
