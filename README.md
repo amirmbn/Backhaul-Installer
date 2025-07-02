@@ -2,13 +2,11 @@
 
 <br>
 TCP Configuration > Enable<br>
-TCP Multiplexing Configuration > Enable<br>
-<br>
+TCP Multiplexing Configuration > Enable
+<br><br>
 
 <div align="right">
-
  - این پروژه جدید است و فعلا درحال گسترش و رفع باگ است (لطفا فعلا از این پروژه استفاده نکنید)
-
 </div>
 <div align="left">
 
@@ -21,7 +19,6 @@ TCP Multiplexing Configuration > Enable<br>
 <br><br>
 </div>
 <div align="left">
-
 ```
 sudo wget -4 https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
 ```
@@ -32,7 +29,6 @@ sudo wget -4 https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/b
 <br><br>
 </div>
 <div align="left">
-  
 ```
 sudo wget -4 https://icloud.storage.c2.liara.space/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
 ```
@@ -43,7 +39,6 @@ sudo wget -4 https://icloud.storage.c2.liara.space/backhaul_install.sh && sudo c
 <br><br>
 </div>
 <div align="left">
-
 ```
 sudo systemctl status backhaul.service
 ```
@@ -54,7 +49,6 @@ sudo systemctl status backhaul.service
 <br><br>
 </div>
 <div align="left">
-
 ```
 journalctl -u backhaul.service -e -f
 ```
