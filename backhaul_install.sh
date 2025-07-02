@@ -592,10 +592,9 @@ elif [[ "$MODE" == "client" ]]; then
 fi
 
 clear # Clear screen before displaying the final config and running Backhaul
-echo "---"
+echo "------------------"
 echo "Configuration file ($CONFIG_FILE) created successfully:"
-echo "---"
-cat "$CONFIG_FILE" # Display the generated config file
+echo "---------------------------------------------------------------------"
 echo ""
 
 # Create the systemd service file
