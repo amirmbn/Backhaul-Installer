@@ -19,7 +19,6 @@ TCP Multiplexing Configuration > Enable<br>
 <br>
  - کد زیر را در سرور اوبونتو خود Past کنید
 <br>
-
 </div>
 <div align="left">
 
@@ -41,8 +40,6 @@ sudo wget -4 https://icloud.storage.c2.liara.space/backhaul_install.sh && sudo c
 <div align="right">
 <br>
  - برای بررسی وضعیت سرویس از کد زیر استفاده کنید
-<br>
-
 </div>
 <div align="left">
 
@@ -53,8 +50,6 @@ sudo systemctl status backhaul.service
 <div align="right">
 <br>
  - برای بررسی آخرین لاگ های backhaul از کد زیر استفاده کنید
-<br>
-
 </div>
 <div align="left">
 
