@@ -594,7 +594,7 @@ fi
 clear # Clear screen before displaying the final config and running Backhaul
 echo "------------------"
 echo "Configuration file ($CONFIG_FILE) created successfully:"
-echo "---------------------------------------------------------------------"
+echo "-------------------------------------------------------"
 echo ""
 
 # Create the systemd service file
