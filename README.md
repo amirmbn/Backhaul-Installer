@@ -26,6 +26,7 @@ TCP Multiplexing Configuration > Enable<br>
 ```
 sudo wget -4 https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
 ```
+</div>
 <div align="right">
 <br>
  - سرورهای که اینترنت بین‌الملل ندارن از کد زیر استفاده کنند.
@@ -40,4 +41,28 @@ sudo wget -4 https://icloud.storage.c2.liara.space/backhaul_install.sh && sudo c
 <br><br>
 <a href="https://github.com/Musixal/Backhaul" target="_blank">Source</a>
 
+</div>
+<div align="right">
+
+ - برای بررسی وضعیت سرویس از کد زیر استفاده کنید
+<br>
+
+</div>
+<div align="left">
+
+```
+sudo systemctl status backhaul.service
+```
+</div>
+<div align="right">
+
+ - برای بررسی آخرین لاگ های backhaul از کد زیر استفاده کنید
+<br>
+
+</div>
+<div align="left">
+
+```
+sudo systemctl status backhaul.service
+```
 </div>
