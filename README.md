@@ -63,6 +63,6 @@ sudo systemctl status backhaul.service
 <div align="left">
 
 ```
-sudo systemctl status backhaul.service
+journalctl -u backhaul.service -e -f
 ```
 </div>
