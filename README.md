@@ -61,6 +61,8 @@ sudo systemctl status backhaul.service
 ```
 journalctl -u backhaul.service -e -f
 ```
+</div>
+<div align="right">
 <br><br>
 <a href="https://github.com/Musixal/Backhaul" target="_blank">سورس اصلی پروژه</a>
 </div>
