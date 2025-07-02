@@ -39,7 +39,7 @@ sudo wget -4 https://icloud.storage.c2.liara.space/backhaul_install.sh && sudo c
 ```
 </div>
 <div align="right">
-
+<br>
  - برای بررسی وضعیت سرویس از کد زیر استفاده کنید
 <br>
 
@@ -51,7 +51,7 @@ sudo systemctl status backhaul.service
 ```
 </div>
 <div align="right">
-
+<br>
  - برای بررسی آخرین لاگ های backhaul از کد زیر استفاده کنید
 <br>
 
