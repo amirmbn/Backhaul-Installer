@@ -621,4 +621,4 @@ sudo systemctl daemon-reload
 sudo systemctl enable backhaul.service
 sudo systemctl start backhaul.service
 
-echo "Backhaul service enabled and started."
+sudo systemctl status backhaul.service
