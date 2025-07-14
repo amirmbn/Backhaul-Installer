@@ -26,17 +26,6 @@ sudo wget -4 https://raw.githubusercontent.com/amirmbn/Backhaul-Installer/main/b
 </div>
 <div align="right">
 <br>
- - سرورهای که اینترنت بین‌الملل ندارن از کد زیر استفاده کنند.
-<br><br>
-</div>
-<div align="left">
-
-```
-sudo wget -4 https://icloud.storage.c2.liara.space/backhaul_install.sh && sudo chmod +x backhaul_install.sh && sudo ./backhaul_install.sh
-```
-</div>
-<div align="right">
-<br>
  - برای بررسی وضعیت سرویس از کد زیر استفاده کنید
 <br><br>
 </div>
